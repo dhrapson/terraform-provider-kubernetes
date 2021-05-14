@@ -52,6 +52,28 @@ func TestAccKubernetesDefaultServiceAccount_basic(t *testing.T) {
 	})
 }
 
+func TestAccKubernetesDefaultServiceAccount_automount(t *testing.T) {
+	var conf api.ServiceAccount
+	namespace := fmt.Sprintf("tf-acc-test-%s", acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum))
+	resourceName := "kubernetes_default_service_account.test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		IDRefreshName:     resourceName,
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckKubernetesServiceAccountDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccKubernetesDefaultServiceAccountConfig_automount(namespace),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKubernetesServiceAccountExists(resourceName, &conf),
+					resource.TestCheckResourceAttr(resourceName, "automount_service_account_token", "false"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccKubernetesDefaultServiceAccount_secrets(t *testing.T) {
 	var conf api.ServiceAccount
 	namespace := fmt.Sprintf("tf-acc-test-%s", acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum))
@@ -107,6 +129,23 @@ resource "kubernetes_default_service_account" "test" {
       TestLabelThree = "three"
     }
   }
+}
+`, namespace)
+}
+
+func testAccKubernetesDefaultServiceAccountConfig_automount(namespace string) string {
+	return fmt.Sprintf(`resource "kubernetes_namespace" "test" {
+  metadata {
+    name = "%s"
+  }
+}
+
+resource "kubernetes_default_service_account" "test" {
+  metadata {
+    namespace = kubernetes_namespace.test.metadata.0.name
+  }
+
+	automount_service_account_token = false
 }
 `, namespace)
 }
