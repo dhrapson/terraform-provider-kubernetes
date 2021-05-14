@@ -39,13 +39,14 @@ func TestAccKubernetesDefaultServiceAccount_basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet(resourceName, "metadata.0.uid"),
 					resource.TestCheckResourceAttr(resourceName, "secret.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "image_pull_secret.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "automount_service_account_token", "true"),
 				),
 			},
 			{
 				ResourceName:            resourceName,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"metadata.0.resource_version", "automount_service_account_token"},
+				ImportStateVerifyIgnore: []string{"metadata.0.resource_version"},
 			},
 		},
 	})
